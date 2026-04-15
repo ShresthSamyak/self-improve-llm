@@ -1,0 +1,313 @@
+{
+  "timestamp": "2026-04-15T11:15:12.690032+00:00",
+  "queries": [
+    "Explain the vanishing gradient problem and how residual connections solve it.",
+    "What is the difference between L1 and L2 regularisation, and when should you use each?",
+    "How does the Adam optimiser differ from SGD with momentum?",
+    "Describe how a Variational Autoencoder (VAE) differs from a standard Autoencoder.",
+    "What is the purpose of batch normalisation and where should it be placed in a network?",
+    "Explain the bias-variance trade-off in machine learning.",
+    "How does RLHF (Reinforcement Learning from Human Feedback) improve language models?",
+    "What is knowledge distillation and why is it used in model compression?",
+    "Describe the difference between fine-tuning and prompt engineering for LLM adaptation.",
+    "How does contrastive learning work, and what is its role in self-supervised learning?"
+  ],
+  "summaries": {
+    "A_Baseline": {
+      "system_name": "A_Baseline",
+      "query_count": 10,
+      "avg_factual_accuracy": 5.0,
+      "hallucination_rate": 0.0,
+      "avg_critic_score": 5.0,
+      "avg_iterations": 0.0,
+      "avg_latency_s": 0.0,
+      "convergence_rate": 0.0
+    },
+    "B_LLM_Critic": {
+      "system_name": "B_LLM_Critic",
+      "query_count": 10,
+      "avg_factual_accuracy": 5.0,
+      "hallucination_rate": 0.0,
+      "avg_critic_score": 7.7,
+      "avg_iterations": 2.0,
+      "avg_latency_s": 0.001,
+      "convergence_rate": 1.0
+    }
+  },
+  "improvements": {
+    "B_LLM_Critic_vs_A_Baseline": {
+      "factual_accuracy_pct": 0.0,
+      "hallucination_rate_pct": 0.0,
+      "critic_score_pct": 54.0,
+      "iterations_pct": -20000.0,
+      "latency_pct": -10.0,
+      "convergence_rate_pct": 10000.0
+    }
+  },
+  "per_query_results": {
+    "A_Baseline": [
+      {
+        "system_name": "A_Baseline",
+        "query": "Explain the vanishing gradient problem and how residual connections solve it.",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      },
+      {
+        "system_name": "A_Baseline",
+        "query": "What is the difference between L1 and L2 regularisation, and when should you use each?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      },
+      {
+        "system_name": "A_Baseline",
+        "query": "How does the Adam optimiser differ from SGD with momentum?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      },
+      {
+        "system_name": "A_Baseline",
+        "query": "Describe how a Variational Autoencoder (VAE) differs from a standard Autoencoder.",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      },
+      {
+        "system_name": "A_Baseline",
+        "query": "What is the purpose of batch normalisation and where should it be placed in a network?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      },
+      {
+        "system_name": "A_Baseline",
+        "query": "Explain the bias-variance trade-off in machine learning.",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      },
+      {
+        "system_name": "A_Baseline",
+        "query": "How does RLHF (Reinforcement Learning from Human Feedback) improve language models?",
+        "initial_answer": "[Refined — pass 13]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "final_answer": "[Refined — pass 13]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      },
+      {
+        "system_name": "A_Baseline",
+        "query": "What is knowledge distillation and why is it used in model compression?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      },
+      {
+        "system_name": "A_Baseline",
+        "query": "Describe the difference between fine-tuning and prompt engineering for LLM adaptation.",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      },
+      {
+        "system_name": "A_Baseline",
+        "query": "How does contrastive learning work, and what is its role in self-supervised learning?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "iterations_used": 0,
+        "latency_s": 0.0,
+        "pipeline_critic_score": 5.0,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "baseline",
+        "judge_raw_response": "{\n  \"factual_errors\": [\n    \"Claim about the mechanism is oversimplified and partially incorrect.\"\n  ],\n  \"hallucinations\": [\n    \"Referenced a study that does not exist in the provided context.\"\n  ],\n  \"missing_concepts\": [\n    \"Key concept of gradient flow is not mentioned.\",\n    \"No discussion of edge cases or failure modes.\"\n  ],\n  \"logical_flaws\": [\n    \"Conclusion does not follow from the stated premises.\"\n  ],\n  \"improvement_actions\": [\n    \"Remove or verify the referenced study \\u2014 it appears fabricated.\",\n    \"Correct the mechanism description with accurate details.\",\n    \"Explain gradient flow explicitly.\",\n    \"Restructure the conclusion to follow logically from the evidence.\"\n  ],\n  \"score\": 4.5,\n  \"confidence\": 0.78,\n  \"verdict\": \"poor\"\n}"
+      }
+    ],
+    "B_LLM_Critic": [
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "Explain the vanishing gradient problem and how residual connections solve it.",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "[Refined — pass 1]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.002,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      },
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "What is the difference between L1 and L2 regularisation, and when should you use each?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "[Refined — pass 2]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.001,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      },
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "How does the Adam optimiser differ from SGD with momentum?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "[Refined — pass 3]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.001,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      },
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "Describe how a Variational Autoencoder (VAE) differs from a standard Autoencoder.",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "[Refined — pass 4]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.001,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      },
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "What is the purpose of batch normalisation and where should it be placed in a network?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "[Refined — pass 5]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.001,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      },
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "Explain the bias-variance trade-off in machine learning.",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "[Refined — pass 6]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.002,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      },
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "How does RLHF (Reinforcement Learning from Human Feedback) improve language models?",
+        "initial_answer": "[Refined — pass 14]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "final_answer": "[Refined — pass 7]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.001,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      },
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "What is knowledge distillation and why is it used in model compression?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "[Refined — pass 8]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.001,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      },
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "Describe the difference between fine-tuning and prompt engineering for LLM adaptation.",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "[Refined — pass 9]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.001,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      },
+      {
+        "system_name": "B_LLM_Critic",
+        "query": "How does contrastive learning work, and what is its role in self-supervised learning?",
+        "initial_answer": "This is a generated answer for the given query.\n\nThe topic involves several interconnected concepts that are worth\nexploring carefully.  At a high level, the mechanism works by\ncombining inputs in a way that produces a coherent output.\n\nFurther details depend on the specific context provided.",
+        "final_answer": "[Refined — pass 10]\n\nHere is an improved answer that addresses the feedback:\n\n1. **Concrete example added**: Consider the case where X leads to Y\n   because of Z mechanism.\n2. **Structured explanation**: The process works as follows:\n   - Step A: initialise the context.\n   - Step B: apply the transformation.\n   - Step C: validate the result.\n3. **Summary**: In short, the answer is well-grounded in both\n   theory and practice.",
+        "iterations_used": 2,
+        "latency_s": 0.001,
+        "pipeline_critic_score": 7.7,
+        "hallucination_count": 0,
+        "factual_accuracy": 5.0,
+        "exit_reason": "converged",
+        "judge_raw_response": "{\n  \"factual_errors\": [],\n  \"hallucinations\": [],\n  \"missing_concepts\": [\n    \"Could briefly note computational complexity trade-offs.\"\n  ],\n  \"logical_flaws\": [],\n  \"improvement_actions\": [\n    \"Optionally add a sentence on complexity trade-offs for completeness.\"\n  ],\n  \"score\": 8.2,\n  \"confidence\": 0.91,\n  \"verdict\": \"good\"\n}"
+      }
+    ]
+  }
+}
