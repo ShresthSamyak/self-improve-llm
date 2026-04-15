@@ -410,11 +410,14 @@ def apply_lora(
         target_modules=["q_proj", "v_proj"],
         bias="none",
         inference_mode=False,
-        # Disable float8 autocast — requires torch >= 2.1 with float8 support.
-        # Without this, PEFT tries torch.float8_e8m0fnu which older builds lack.
-        autocast_adapter_dtype=False,
     )
-    model = get_peft_model(model, lora_config)
+    # autocast_adapter_dtype=False disables float8 autocast which requires
+    # torch >= 2.1 with float8 support. Pass it to get_peft_model, not LoraConfig.
+    import inspect as _inspect
+    _gpeft_kwargs = {}
+    if "autocast_adapter_dtype" in _inspect.signature(get_peft_model).parameters:
+        _gpeft_kwargs["autocast_adapter_dtype"] = False
+    model = get_peft_model(model, lora_config, **_gpeft_kwargs)
     model.print_trainable_parameters()
     return model
 
@@ -527,17 +530,18 @@ def train(args: argparse.Namespace) -> None:
         per_device_eval_batch_size=args.batch_size,
         gradient_accumulation_steps=args.grad_accum,
         gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={"use_reentrant": False},
         optim="paged_adamw_32bit",      # memory-efficient AdamW for QLoRA
         learning_rate=args.learning_rate,
         lr_scheduler_type="cosine",
         warmup_ratio=0.05,
-        fp16=True,
-        bf16=False,                     # use fp16 unless you have Ampere+ GPU
+        fp16=False,                     # disabled: FP16 scaler conflicts with 4-bit quant
+        bf16=False,                     # set True if you have an Ampere+ GPU (RTX 30xx/40xx)
         logging_steps=10,
         eval_strategy="epoch" if eval_dataset else "no",
         save_strategy="epoch",
         save_total_limit=2,             # keep only the 2 best checkpoints
-        load_best_model_at_end=bool(eval_dataset),
+        load_best_model_at_end=False,          # disabled: load_adapter triggers float8 bug on this PEFT version
         report_to="none",               # disable wandb / tensorboard by default
         dataloader_num_workers=0,
         remove_unused_columns=False,
