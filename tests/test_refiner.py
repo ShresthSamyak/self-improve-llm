@@ -17,11 +17,19 @@ from models.base_llm import MockLLM
 
 def _make_feedback(score: float = 5.0) -> CriticFeedback:
     return CriticFeedback(
+        factual_errors=["The mechanism described is inaccurate."],
+        hallucinations=["Referenced a non-existent theorem."],
+        missing_concepts=["Does not address edge cases."],
+        logical_flaws=["Conclusion does not follow from the premise."],
+        improvement_actions=[
+            "Remove or verify the theorem reference.",
+            "Correct the mechanism description.",
+            "Add a section on edge cases.",
+        ],
         score=score,
-        confidence=0.6,
-        issues=["Too vague.", "No examples."],
-        suggestions=["Add a concrete example.", "Use numbered steps."],
-        verdict="needs_improvement",
+        raw_llm_score=score + 1.5,   # penalty was already applied
+        confidence=0.72,
+        verdict="poor",
         raw_response="{}",
     )
 
@@ -59,8 +67,8 @@ def test_refiner_preserves_provenance():
     assert output.iteration == 2
 
 
-def test_refiner_prompt_includes_issues():
-    """Verify the prompt forwards critic issues to the LLM."""
+def test_refiner_prompt_includes_all_issue_categories():
+    """Verify the prompt surfaces hallucinations, factual errors, and actions."""
     captured_prompts = []
 
     class _CaptureLLM(MockLLM):
@@ -75,12 +83,37 @@ def test_refiner_prompt_includes_issues():
     refiner.refine("Q?", "A", feedback)
 
     assert len(captured_prompts) == 1
-    assert "Too vague." in captured_prompts[0]
-    assert "Add a concrete example." in captured_prompts[0]
+    prompt = captured_prompts[0]
+
+    # Hallucinations must appear prominently (they're highest priority)
+    assert "Referenced a non-existent theorem." in prompt
+    # Factual errors must appear
+    assert "The mechanism described is inaccurate." in prompt
+    # Improvement actions must appear
+    assert "Remove or verify the theorem reference." in prompt
+
+
+def test_refiner_prompt_includes_score_and_verdict():
+    """Score and verdict must appear so the refiner knows severity."""
+    captured_prompts = []
+
+    class _CaptureLLM(MockLLM):
+        def complete(self, prompt, system_prompt=None):
+            captured_prompts.append(prompt)
+            return super().complete(prompt, system_prompt)
+
+    llm = _CaptureLLM(LLMConfig())
+    refiner = Refiner(llm, LLMConfig())
+    refiner.refine("Q?", "A", _make_feedback(score=3.5))
+
+    prompt = captured_prompts[0]
+    assert "3.5" in prompt
+    assert "poor" in prompt
 
 
 if __name__ == "__main__":
     test_refiner_returns_output()
     test_refiner_preserves_provenance()
-    test_refiner_prompt_includes_issues()
+    test_refiner_prompt_includes_all_issue_categories()
+    test_refiner_prompt_includes_score_and_verdict()
     print("All refiner tests passed.")

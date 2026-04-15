@@ -91,29 +91,47 @@ class MockLLM(BaseLLM):
     parsing never breaks.
     """
 
-    # Canned critic response — always valid JSON, score below threshold
-    # so the loop actually iterates during demos.
+    # Canned critic response — valid JSON matching CriticFeedback schema.
+    # Score is below the default 7.0 threshold so the loop iterates in demos.
     _CRITIC_TEMPLATE = {
-        "score": 5.5,
-        "confidence": 0.60,
-        "issues": [
-            "Answer lacks concrete examples.",
-            "Explanation could be more structured.",
+        "factual_errors": [
+            "Claim about the mechanism is oversimplified and partially incorrect."
         ],
-        "suggestions": [
-            "Add at least one worked example.",
-            "Use numbered steps for clarity.",
+        "hallucinations": [
+            "Referenced a study that does not exist in the provided context."
         ],
-        "verdict": "needs_improvement",
+        "missing_concepts": [
+            "Key concept of gradient flow is not mentioned.",
+            "No discussion of edge cases or failure modes.",
+        ],
+        "logical_flaws": [
+            "Conclusion does not follow from the stated premises."
+        ],
+        "improvement_actions": [
+            "Remove or verify the referenced study — it appears fabricated.",
+            "Correct the mechanism description with accurate details.",
+            "Explain gradient flow explicitly.",
+            "Restructure the conclusion to follow logically from the evidence.",
+        ],
+        "score": 4.5,
+        "confidence": 0.78,
+        "verdict": "poor",
     }
 
-    # Canned "good enough" response returned on the second critique pass.
+    # Canned "good enough" response — returned on even-numbered calls.
     _CRITIC_GOOD = {
-        "score": 8.5,
-        "confidence": 0.92,
-        "issues": [],
-        "suggestions": ["Minor wording polish only."],
-        "verdict": "acceptable",
+        "factual_errors": [],
+        "hallucinations": [],
+        "missing_concepts": [
+            "Could briefly note computational complexity trade-offs."
+        ],
+        "logical_flaws": [],
+        "improvement_actions": [
+            "Optionally add a sentence on complexity trade-offs for completeness."
+        ],
+        "score": 8.2,
+        "confidence": 0.91,
+        "verdict": "good",
     }
 
     def __init__(self, config: LLMConfig) -> None:
@@ -130,8 +148,13 @@ class MockLLM(BaseLLM):
         self._call_count += 1
         prompt_lower = prompt.lower()
 
-        if "critique" in prompt_lower or "evaluate" in prompt_lower:
-            # Alternate between needs_improvement and acceptable
+        # Detect the critic prompt by any of its structural markers.
+        # "answer under review" is unique to the new research-grade critic prompt.
+        # "critique"/"evaluate" kept for backwards compatibility with tests.
+        _CRITIC_MARKERS = (
+            "critique", "evaluate", "answer under review", "evaluation rules",
+        )
+        if any(marker in prompt_lower for marker in _CRITIC_MARKERS):
             template = (
                 self._CRITIC_GOOD
                 if self._call_count % 2 == 0

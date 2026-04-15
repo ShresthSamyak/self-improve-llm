@@ -153,9 +153,13 @@ class RefinementLoop:
                 result.converged = self._quality_met(feedback)
                 result.final_answer = current_answer
                 logger.info(
-                    "Loop exiting | converged=%s | score=%.1f",
+                    "Loop exiting | converged=%s | score=%.1f | verdict=%s | "
+                    "hallucinations=%d | factual_errors=%d",
                     result.converged,
                     feedback.score,
+                    feedback.verdict,
+                    len(feedback.hallucinations),
+                    len(feedback.factual_errors),
                 )
                 break
 
@@ -171,9 +175,25 @@ class RefinementLoop:
             # Exhausted all iterations — use whatever we have.
             result.final_answer = current_answer
             result.converged = False
+            last_feedback = result.iterations[-1].feedback if result.iterations else None
+            if last_feedback and last_feedback.has_hallucinations:
+                logger.warning(
+                    "Loop exhausted but final answer still contains %d hallucination(s): %s. "
+                    "Consider increasing max_iterations or using a stronger model.",
+                    len(last_feedback.hallucinations),
+                    last_feedback.hallucinations,
+                )
+            elif last_feedback and last_feedback.factual_errors:
+                logger.warning(
+                    "Loop exhausted but final answer still has %d factual error(s). "
+                    "Manual review recommended.",
+                    len(last_feedback.factual_errors),
+                )
             logger.info(
-                "Loop exhausted max iterations (%d). Using last answer.",
+                "Loop exhausted max iterations (%d). Final score=%.1f verdict=%s.",
                 self._config.max_iterations,
+                last_feedback.score if last_feedback else 0.0,
+                last_feedback.verdict if last_feedback else "unknown",
             )
 
         logger.info("Pipeline done | total_iterations=%d", result.total_iterations)
@@ -184,15 +204,28 @@ class RefinementLoop:
     # ------------------------------------------------------------------
 
     def _quality_met(self, feedback: CriticFeedback) -> bool:
-        """Return True if answer quality passes configured thresholds."""
-        return (
-            feedback.score >= self._config.min_quality_score
-            or feedback.confidence >= self._config.confidence_threshold
-            or feedback.verdict == "acceptable"
-        )
+        """
+        Return True only when the answer is genuinely acceptable.
+
+        Rules (all must hold):
+        - Zero hallucinations.  A single hallucination is an automatic fail.
+        - Zero factual errors.  Incorrect facts cannot be "good enough".
+        - Penalised score >= configured minimum (default 7.0).
+        - Verdict is "good" or "excellent" — "acceptable" and "poor"
+          always require another pass.
+        """
+        if feedback.has_hallucinations:
+            logger.debug("quality_met=False: hallucinations present.")
+            return False
+        if feedback.factual_errors:
+            logger.debug("quality_met=False: factual errors present.")
+            return False
+        score_ok   = feedback.score >= self._config.min_quality_score
+        verdict_ok = feedback.verdict in ("good", "excellent")
+        return score_ok and verdict_ok
 
     def _should_stop(self, feedback: CriticFeedback, iteration: int) -> bool:
-        """Return True if the loop should exit before refining."""
+        """Return True if the loop should exit (with or without converging)."""
         if self._quality_met(feedback):
             return True
         if iteration >= self._config.max_iterations:

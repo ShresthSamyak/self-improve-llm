@@ -156,15 +156,32 @@ def run(query: str, config: PipelineConfig, use_mock: bool = False) -> None:
         print(f"REFINEMENT ITERATIONS  (ran {result.total_iterations})")
         print(separator)
         for record in result.iterations:
+            fb = record.feedback
             print(
                 f"\n[Iteration {record.iteration}]  "
-                f"score={record.feedback.score}/10  "
-                f"verdict={record.feedback.verdict}"
+                f"score={fb.score}/10 (raw={fb.raw_llm_score})  "
+                f"verdict={fb.verdict}  confidence={fb.confidence:.2f}"
             )
-            if record.feedback.issues:
-                print("  Issues:")
-                for issue in record.feedback.issues:
-                    print(f"    • {issue}")
+            if fb.hallucinations:
+                print("  Hallucinations [!]:")
+                for h in fb.hallucinations:
+                    print(f"    [!] {h}")
+            if fb.factual_errors:
+                print("  Factual errors [x]:")
+                for e in fb.factual_errors:
+                    print(f"    [x] {e}")
+            if fb.logical_flaws:
+                print("  Logical flaws [~]:")
+                for f_ in fb.logical_flaws:
+                    print(f"    [~] {f_}")
+            if fb.missing_concepts:
+                print("  Missing concepts [ ]:")
+                for m in fb.missing_concepts:
+                    print(f"    [ ] {m}")
+            if fb.improvement_actions:
+                print("  Actions >>:")
+                for a in fb.improvement_actions:
+                    print(f"    >> {a}")
 
     print(f"\n{separator}")
     print(f"FINAL ANSWER  (converged={result.converged})")

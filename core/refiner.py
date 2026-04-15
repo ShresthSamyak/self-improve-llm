@@ -119,17 +119,53 @@ class Refiner:
     def _build_prompt(
         self, query: str, answer: str, feedback: CriticFeedback
     ) -> str:
-        issues_text = "\n".join(f"  - {i}" for i in feedback.issues) or "  (none)"
-        suggestions_text = (
-            "\n".join(f"  - {s}" for s in feedback.suggestions) or "  (none)"
-        )
+        def _section(title: str, items: list, marker: str = "-") -> str:
+            if not items:
+                return f"{title}: (none)"
+            lines = "\n".join(f"  {marker} {item}" for item in items)
+            return f"{title}:\n{lines}"
+
+        # Hallucinations and factual errors get the most prominent placement
+        # so the Refiner addresses them first.
+        sections = "\n\n".join([
+            f"ORIGINAL QUESTION:\n{query}",
+            (
+                f"CURRENT ANSWER  "
+                f"[critic score: {feedback.score}/10  verdict: {feedback.verdict}]:\n"
+                f"{answer}"
+            ),
+            _section(
+                "[CRITICAL] HALLUCINATIONS — remove or replace with verified facts",
+                feedback.hallucinations,
+                marker="[!]",
+            ),
+            _section(
+                "[CRITICAL] FACTUAL ERRORS — correct each one explicitly",
+                feedback.factual_errors,
+                marker="[x]",
+            ),
+            _section(
+                "LOGICAL FLAWS — fix the reasoning",
+                feedback.logical_flaws,
+                marker="[~]",
+            ),
+            _section(
+                "MISSING CONCEPTS — add where appropriate",
+                feedback.missing_concepts,
+                marker="[ ]",
+            ),
+            _section(
+                "IMPROVEMENT ACTIONS — apply in order",
+                feedback.improvement_actions,
+                marker=">>",
+            ),
+        ])
 
         return (
-            f"Improve the following answer based on the critic feedback below.\n\n"
-            f"ORIGINAL QUESTION:\n{query}\n\n"
-            f"CURRENT ANSWER:\n{answer}\n\n"
-            f"ISSUES IDENTIFIED (score {feedback.score}/10):\n{issues_text}\n\n"
-            f"SUGGESTIONS:\n{suggestions_text}\n\n"
-            f"Write an improved version of the answer that addresses all issues "
-            f"and incorporates all suggestions. Return only the refined answer."
+            "You are rewriting an answer to fix all identified issues.\n"
+            "Priorities: (1) remove hallucinations, (2) correct facts, "
+            "(3) fix logic, (4) add missing concepts.\n"
+            "Do NOT mention the feedback in your answer. "
+            "Return ONLY the improved answer.\n\n"
+            + sections
         )
