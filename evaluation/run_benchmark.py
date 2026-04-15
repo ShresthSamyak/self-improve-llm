@@ -1,7 +1,7 @@
 """
 evaluation/run_benchmark.py
 ----------------------------
-Benchmarks three pipeline configurations head-to-head:
+Benchmarks up to four pipeline configurations head-to-head:
 
   System A — Baseline
     Generator only.  No critic, no refinement.  Raw first-pass answer.
@@ -14,6 +14,11 @@ Benchmarks three pipeline configurations head-to-head:
     Generator + LearnedCritic (fine-tuned MiniLM, fast local inference)
     with LLM fallback for answers below the confidence threshold
     + same Refiner + adaptive loop.
+
+  System D — Browser Augmented  (enabled with --use-browser)
+    Same as System B but with web grounding active: when the critic detects
+    hallucinations or factual errors, DuckDuckGo is queried and the top-2
+    pages are fetched and injected into the Refiner prompt.
 
 Metrics (per query, aggregated across the dataset)
 ----------------------------------------------------
@@ -49,6 +54,9 @@ Usage
 
   # skip Learned Critic (no weights / no torch):
   python evaluation/run_benchmark.py --skip-learned --mock
+
+  # include Browser Augmented system (requires: pip install duckduckgo-search):
+  python evaluation/run_benchmark.py --use-browser
 """
 
 from __future__ import annotations
@@ -418,6 +426,55 @@ class LearnedCriticRunner(SystemRunner):
         )
 
 
+class BrowserAugmentedRunner(SystemRunner):
+    """
+    System D: Generator + LLM Critic + Browser grounding + adaptive Refiner loop.
+
+    Identical to System B but constructed with ``use_browser=True``.
+    When the critic flags hallucinations or factual errors, the loop
+    fetches up to 2 web pages via DuckDuckGo and injects their content
+    into the Refiner prompt as grounding evidence.
+
+    Requires: pip install duckduckgo-search
+    """
+
+    @property
+    def name(self) -> str:
+        return "D_Browser_Augmented"
+
+    def __init__(self, loop: RefinementLoop) -> None:
+        self._loop = loop
+
+    def run_query(self, query: str, judge: FactualJudge) -> QueryResult:
+        t0 = time.perf_counter()
+        try:
+            result = self._loop.run(query)
+        except (OllamaError, Exception) as exc:
+            logger.error("BrowserAugmentedRunner: pipeline failed: %s", exc)
+            return _error_result(self.name, query, str(exc))
+
+        latency = round(time.perf_counter() - t0, 3)
+        factual_score, has_halluc, judge_raw = judge.judge(query, result.final_answer)
+
+        last_feedback = result.iterations[-1].feedback if result.iterations else None
+        halluc_count = len(last_feedback.hallucinations) if last_feedback else (1 if has_halluc else 0)
+        critic_score = last_feedback.score if last_feedback else 0.0
+
+        return QueryResult(
+            system_name=self.name,
+            query=query,
+            initial_answer=result.initial_answer,
+            final_answer=result.final_answer,
+            iterations_used=result.total_iterations,
+            latency_s=latency,
+            pipeline_critic_score=critic_score,
+            hallucination_count=halluc_count,
+            factual_accuracy=factual_score,
+            exit_reason=result.exit_reason,
+            judge_raw_response=judge_raw,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Factory helpers
 # ---------------------------------------------------------------------------
@@ -446,9 +503,10 @@ def build_systems(
     use_mock: bool,
     model_dir: str,
     skip_learned: bool,
+    use_browser: bool = False,
 ) -> tuple[List[SystemRunner], FactualJudge]:
     """
-    Instantiate all three system runners and the factual judge.
+    Instantiate system runners and the factual judge.
 
     Parameters
     ----------
@@ -464,6 +522,9 @@ def build_systems(
         Path to trained LearnedCritic weights.
     skip_learned:
         If True, skip System C entirely.
+    use_browser:
+        If True, add System D (Browser Augmented) to the runner list.
+        Requires duckduckgo-search to be installed.
 
     Returns
     -------
@@ -518,6 +579,18 @@ def build_systems(
                 "System C (Learned Critic) skipped — torch/transformers "
                 "unavailable or weights not found at '%s'.", model_dir
             )
+
+    # --- System D: Browser Augmented ---
+    if use_browser:
+        logger.info("Browser system active: grounding enabled (System D)")
+        browser_loop = RefinementLoop(
+            generator=generator,
+            critic=critic,
+            refiner=refiner,
+            config=loop_config,
+            use_browser=True,
+        )
+        runners.append(BrowserAugmentedRunner(loop=browser_loop))
 
     return runners, judge
 
@@ -873,6 +946,14 @@ def main() -> None:
         "--mock", action="store_true",
         help="Use MockLLM for all components (no Ollama required)."
     )
+    parser.add_argument(
+        "--use-browser", action="store_true",
+        help=(
+            "Include System D (Browser Augmented): web grounding via DuckDuckGo "
+            "when hallucinations/factual errors are detected. "
+            "Requires: pip install duckduckgo-search"
+        ),
+    )
     args = parser.parse_args()
 
     # Load queries
@@ -909,6 +990,7 @@ def main() -> None:
         use_mock=args.mock,
         model_dir=args.model_dir,
         skip_learned=args.skip_learned,
+        use_browser=args.use_browser,
     )
 
     benchmark = Benchmark(
