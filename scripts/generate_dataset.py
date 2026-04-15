@@ -11,12 +11,69 @@ from models.base_llm import OllamaLLM
 
 def load_queries(file_path):
     # Depending on the use case, this could load from a text file, CSV or JSON
-    # For now, we supply some default queries if path is not provided.
     return [
-        "Explain the process of backpropagation in neural networks.",
-        "What is the difference between supervised and unsupervised learning?",
-        "Describe the self-attention mechanism in Transformers.",
-        "How does a convolutional neural network (CNN) work?"
+        # AI / ML
+        "Explain backpropagation in neural networks",
+        "What is overfitting and how to prevent it",
+        "Difference between supervised and unsupervised learning",
+        "What is gradient descent",
+        "Explain the transformer architecture",
+        "What is the self-attention mechanism in transformers",
+        "How does a convolutional neural network work",
+        "What is batch normalization and why is it used",
+        "Explain the bias-variance tradeoff",
+        "What is reinforcement learning from human feedback (RLHF)",
+        "Explain knowledge distillation in deep learning",
+        "What is a variational autoencoder (VAE)",
+        "Difference between L1 and L2 regularization",
+        "What is the vanishing gradient problem",
+        "How does the Adam optimizer work",
+        "What is contrastive learning",
+        "Explain fine-tuning vs prompting in large language models",
+        "What is dropout and how does it prevent overfitting",
+        "How does a recurrent neural network differ from a feedforward network",
+        "What is transfer learning",
+
+        # Computer Science
+        "What is a hash table and how does it handle collisions",
+        "Explain the time complexity of quicksort",
+        "Difference between a process and a thread",
+        "What is a REST API",
+        "Explain how DNS works",
+        "What is a binary search tree",
+        "Explain the CAP theorem",
+        "What is the difference between TCP and UDP",
+        "How does garbage collection work in Python",
+        "What is a deadlock and how can it be prevented",
+        "Explain the concept of virtual memory",
+        "What is a microservices architecture",
+        "Difference between SQL and NoSQL databases",
+        "What is a Bloom filter",
+        "Explain consistent hashing",
+
+        # General Science
+        "Why is the sky blue",
+        "How does photosynthesis work",
+        "What causes earthquakes",
+        "Explain the theory of relativity simply",
+        "What is quantum computing",
+        "How does CRISPR gene editing work",
+        "What is the difference between fission and fusion",
+        "How does the immune system fight viruses",
+        "What is entropy in thermodynamics",
+        "Explain how vaccines work",
+
+        # Programming / Coding
+        "Write a Python function for binary search",
+        "Explain recursion with an example",
+        "What is dynamic programming",
+        "Explain the four principles of object-oriented programming",
+        "What is a decorator in Python",
+        "Explain the difference between mutable and immutable objects",
+        "What is a closure in programming",
+        "How does async/await work in Python",
+        "What is the difference between a stack and a queue",
+        "Explain big-O notation with examples",
     ]
 
 def get_corruption_prompt(original_answer):
@@ -61,8 +118,9 @@ def main():
     print(f"Generating dataset for {len(queries)} queries...")
     for query in tqdm(queries):
         # 2. Generate a "Good" Answer
-        good_answer = generator.generate(query)
-        
+        good_output = generator.generate(query)
+        good_answer = good_output.answer
+
         # 3. Label the "Good" Answer with Critic
         good_feedback = critic.critique(query, good_answer)
         
