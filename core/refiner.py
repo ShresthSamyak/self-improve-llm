@@ -17,6 +17,7 @@ necessary — that is the loop's responsibility.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import List, Dict
 
 from config import LLMConfig
 from core.critic import CriticFeedback
@@ -89,6 +90,7 @@ class Refiner:
         feedback: CriticFeedback,
         iteration: int = 1,
         strict_mode: bool = False,
+        web_evidence: List[Dict[str, str]] | None = None,
     ) -> RefinerOutput:
         """
         Produce a refined answer for *query* by addressing *feedback*.
@@ -107,6 +109,10 @@ class Refiner:
             When True, the escalated system prompt is used.  The loop sets
             this automatically when hallucinations persist across consecutive
             iterations — do not set it manually unless you know why.
+        web_evidence:
+            Optional list of {"url": str, "content": str} dicts retrieved
+            from the browser tool.  When present, the prompt instructs the
+            model to use the evidence to verify and correct factual claims.
 
         Returns
         -------
@@ -116,10 +122,15 @@ class Refiner:
         system_prompt = (
             self._SYSTEM_PROMPT_STRICT if strict_mode else self._SYSTEM_PROMPT
         )
-        prompt = self._build_prompt(query, answer, feedback, strict_mode=strict_mode)
+        prompt = self._build_prompt(
+            query, answer, feedback,
+            strict_mode=strict_mode,
+            web_evidence=web_evidence or [],
+        )
 
         logger.info(
-            "Refiner: iteration=%d  strict_mode=%s", iteration, strict_mode
+            "Refiner: iteration=%d  strict_mode=%s  web_evidence=%d pages",
+            iteration, strict_mode, len(web_evidence or []),
         )
         logger.debug("Refiner prompt:\n%s", prompt)
 
@@ -144,8 +155,12 @@ class Refiner:
     # ------------------------------------------------------------------
 
     def _build_prompt(
-        self, query: str, answer: str, feedback: CriticFeedback,
+        self,
+        query: str,
+        answer: str,
+        feedback: CriticFeedback,
         strict_mode: bool = False,
+        web_evidence: list | None = None,
     ) -> str:
         def _section(title: str, items: list, marker: str = "-") -> str:
             if not items:
@@ -189,6 +204,24 @@ class Refiner:
             ),
         ])
 
+        # Web evidence block — only present when browsing was triggered
+        evidence_block = ""
+        if web_evidence:
+            pages = []
+            for i, page in enumerate(web_evidence, 1):
+                pages.append(
+                    f"[Source {i}] {page['url']}\n{page['content']}"
+                )
+            evidence_block = (
+                "\n\n=== WEB EVIDENCE (retrieved via browser) ===\n"
+                "You are given external web evidence below. "
+                "Use it to verify claims, remove hallucinations, and improve "
+                "factual correctness. Prefer information from these sources "
+                "over your training data when they conflict.\n\n"
+                + "\n\n---\n\n".join(pages)
+                + "\n=== END WEB EVIDENCE ==="
+            )
+
         header = (
             "*** STRICT MODE ACTIVE — hallucinations persisted. "
             "Accuracy over completeness. Remove all unverifiable claims. ***\n\n"
@@ -202,4 +235,5 @@ class Refiner:
             "Do NOT mention the feedback in your answer. "
             "Return ONLY the improved answer.\n\n"
             + sections
+            + evidence_block
         )

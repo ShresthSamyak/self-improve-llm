@@ -57,7 +57,7 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def build_pipeline(config: PipelineConfig, use_mock: bool = False) -> RefinementLoop:
+def build_pipeline(config: PipelineConfig, use_mock: bool = False, use_browser: bool = False) -> RefinementLoop:
     """
     Construct and wire all pipeline components.
 
@@ -104,10 +104,11 @@ def build_pipeline(config: PipelineConfig, use_mock: bool = False) -> Refinement
         critic=critic,
         refiner=refiner,
         config=config.loop,
+        use_browser=use_browser,
     )
 
 
-def run(query: str, config: PipelineConfig, use_mock: bool = False) -> None:
+def run(query: str, config: PipelineConfig, use_mock: bool = False, use_browser: bool = False) -> None:
     """
     Run the full pipeline for *query* and print the results.
 
@@ -119,8 +120,11 @@ def run(query: str, config: PipelineConfig, use_mock: bool = False) -> None:
         Pipeline configuration.
     use_mock:
         Route all stages to MockLLM instead of Ollama.
+    use_browser:
+        Enable web grounding via DuckDuckGo + w3m when the critic detects
+        hallucinations or factual errors.
     """
-    pipeline = build_pipeline(config, use_mock=use_mock)
+    pipeline = build_pipeline(config, use_mock=use_mock, use_browser=use_browser)
     evaluator = MetricsEvaluator()
 
     # --- Run the loop ---
@@ -228,19 +232,19 @@ def main() -> None:
     parser.add_argument(
         "--generator-model",
         type=str,
-        default="mistral",
+        default="mistral:7b",
         help="Ollama model used by the Generator stage.",
     )
     parser.add_argument(
         "--critic-model",
         type=str,
-        default="llama3",
+        default="llama3.1:8b",
         help="Ollama model used by the Critic stage.",
     )
     parser.add_argument(
         "--refiner-model",
         type=str,
-        default="mistral",
+        default="mistral:7b",
         help="Ollama model used by the Refiner stage.",
     )
     parser.add_argument(
@@ -284,6 +288,14 @@ def main() -> None:
         action="store_true",
         help="Use MockLLM instead of Ollama (no server required).",
     )
+    parser.add_argument(
+        "--browser",
+        action="store_true",
+        help=(
+            "Enable web grounding: fetch DuckDuckGo results when hallucinations "
+            "or factual errors are detected. Requires: pip install duckduckgo-search"
+        ),
+    )
     args = parser.parse_args()
 
     config = PipelineConfig(
@@ -302,7 +314,7 @@ def main() -> None:
         refiner_model=args.refiner_model,
     )
 
-    run(args.query, config, use_mock=args.mock)
+    run(args.query, config, use_mock=args.mock, use_browser=args.browser)
 
 
 if __name__ == "__main__":

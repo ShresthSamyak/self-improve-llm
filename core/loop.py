@@ -44,6 +44,17 @@ from core.generator import Generator, GeneratorOutput
 from core.refiner import Refiner, RefinerOutput
 from utils.logger import get_logger
 
+# Browser tool — imported lazily so it is never required if unused.
+# search_and_browse() returns [] on any failure, so the loop degrades
+# gracefully when duckduckgo-search is not installed.
+try:
+    from tools.browser import search_and_browse as _search_and_browse
+    _BROWSER_AVAILABLE = True
+except ImportError:
+    _BROWSER_AVAILABLE = False
+    def _search_and_browse(query: str, **_) -> list:  # type: ignore[misc]
+        return []
+
 logger = get_logger(__name__)
 
 
@@ -202,11 +213,21 @@ class RefinementLoop:
         critic: Critic,
         refiner: Refiner,
         config: LoopConfig,
+        use_browser: bool = False,
     ) -> None:
         self._generator = generator
         self._critic = critic
         self._refiner = refiner
         self._config = config
+        # Browser grounding: fetch web evidence when hallucinations or
+        # factual errors are detected.  Disabled by default — set
+        # use_browser=True (or pass --browser on the CLI) to enable.
+        self._use_browser = use_browser and _BROWSER_AVAILABLE
+        if use_browser and not _BROWSER_AVAILABLE:
+            logger.warning(
+                "use_browser=True but tools.browser could not be imported. "
+                "Install duckduckgo-search: pip install duckduckgo-search"
+            )
 
     # ------------------------------------------------------------------
     # Public API
@@ -299,13 +320,17 @@ class RefinementLoop:
                     "from previous iteration."
                 )
 
-            # 2e. Refine
+            # 2e. Optional web grounding — only when there are factual issues
+            web_evidence = self._fetch_web_evidence(query, feedback)
+
+            # 2f. Refine
             refiner_output: RefinerOutput = self._refiner.refine(
                 query=query,
                 answer=current_answer,
                 feedback=feedback,
                 iteration=iteration,
                 strict_mode=strict_mode,
+                web_evidence=web_evidence,
             )
             current_answer = refiner_output.refined_answer
             previous_score = feedback.score
@@ -324,6 +349,47 @@ class RefinementLoop:
             result.score_history[-1] if result.score_history else 0.0,
         )
         return result
+
+    # ------------------------------------------------------------------
+    # Web grounding
+    # ------------------------------------------------------------------
+
+    def _fetch_web_evidence(
+        self,
+        query: str,
+        feedback: CriticFeedback,
+    ) -> list:
+        """
+        Conditionally fetch web evidence for the current iteration.
+
+        Browsing is triggered only when:
+        - ``use_browser=True`` was set at construction, AND
+        - The critic found hallucinations OR factual errors.
+
+        This ensures browsing is a targeted fix for factual issues —
+        not a default step that runs every iteration.
+
+        Returns
+        -------
+        list of {"url": str, "content": str}, or [] if not triggered.
+        """
+        if not self._use_browser:
+            return []
+        needs_grounding = (
+            feedback.has_hallucinations or bool(feedback.factual_errors)
+        )
+        if not needs_grounding:
+            return []
+
+        logger.info(
+            "Browser grounding triggered — "
+            "hallucinations=%d  factual_errors=%d",
+            len(feedback.hallucinations),
+            len(feedback.factual_errors),
+        )
+        evidence = _search_and_browse(query, num_urls=2)
+        logger.info("Browser grounding: retrieved %d page(s).", len(evidence))
+        return evidence
 
     # ------------------------------------------------------------------
     # Exit condition logic
