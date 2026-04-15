@@ -1,117 +1,358 @@
-# Self-Correcting LLM with Critic–Refiner Loop and Optional Tool-Augmented Grounding
+# Self-Correcting LLM with Critic–Refiner Loop and Tool-Augmented Grounding
+
+> A modular framework for studying self-correction, learned evaluation, and tool-augmented reasoning in LLM systems.
 
 ## Abstract
-This project explores multi-agent self-reflection and refinement in Large Language Models (LLMs). The system addresses the limitations of naive self-correction by decoupling the generation, evaluation, and refinement phases into distinct models. By introducing specialized learned critics (via supervised learning and QLoRA fine-tuning) and optional tool-augmented grounding (browser retrieval), the architecture mitigates hallucination and improves factual consistency. The framework includes a comprehensive empirical benchmark to measure the efficacy and efficiency of different self-correction paradigms.
 
-## System Architecture
-The system operates as an iterative feedback loop, consisting of three primary components:
+This project explores iterative self-improvement in large language models (LLMs) through a critic–refiner feedback loop, augmented with learned evaluation and optional tool-based grounding.
 
-1. **Generator**: Produces an initial unconstrained response to the user query.
-2. **Critic**: Evaluates the output against logical consistency, factual accuracy, and completeness. The system can route this evaluation through a fast learned encoder, a fine-tuned LLM, or a fallback baseline LLM.
-3. **Refiner**: Integrates the structured critique with the original context to generate a corrected output.
+The system combines:
+- LLM-based critique
+- A learned critic model (MiniLM)
+- Parameter-efficient fine-tuning (QLoRA)
+- Optional browser-based evidence retrieval
 
-The loop terminates when the Critic accepts the output or when the loop controller detects stagnation/reaches a maximum iteration threshold.
+We benchmark multiple configurations to evaluate how self-reflection, learned evaluation, and external grounding affect answer quality, hallucination rates, and convergence behavior.
 
-### Control Flow
-- **User Query** → **Generator LLM** (Initial Draft)
-- **Draft** → **Critic Model** (Evaluation & Scoring)
-- If Accepted → **Final Output**
-- If Rejected → **Critique + Draft** → **Refiner LLM** (Revised Draft) → Loop back to Critic
+---
+
+## Design Philosophy
+
+This system is built around three principles:
+
+### 1. Separation of Roles
+- Generator → produces answers
+- Critic → evaluates
+- Refiner → improves
+
+### 2. Conditional Complexity
+- Advanced modules (browser, learned critic) activate only when needed
+
+### 3. Measurable Behavior
+- Every iteration tracks:
+  - score
+  - delta
+  - convergence state
+
+This enables:
+- debugging
+- benchmarking
+- research analysis
+
+---
+
+## System Overview
+
+The core pipeline follows an iterative refinement loop:
+
+```text
+            ┌──────────────┐
+            │   User Query │
+            └──────┬───────┘
+                   ↓
+            ┌──────────────┐
+            │  Generator   │
+            │   (LLM)      │
+            └──────┬───────┘
+                   ↓
+            ┌──────────────┐
+            │    Critic    │
+            │ (LLM / ML)   │
+            └──────┬───────┘
+                   ↓
+    ┌──────────────┴──────────────┐
+    │                             │
+    ↓                             ↓
+┌──────────────┐          ┌──────────────┐
+│   Browser    │          │   Refiner    │
+│  (Optional)  │          │    (LLM)     │
+└──────┬───────┘          └──────┬───────┘
+       │                         ↓
+       └──────────→──────────→───┘
+                                 ↓
+                          ┌──────────────┐
+                          │  Loop Exit   │
+                          └──────────────┘
+```
+
+Each iteration:
+- Evaluates the current answer
+- Identifies hallucinations, factual errors, and gaps
+- Refines the response accordingly
+
+---
 
 ## Key Features
-- **Decoupled Self-Reflection**: Prevents the confirmation bias inherent in prompting a single LLM to grade its own output.
-- **Multi-Task Active Critic**: Employs a learned MiniLM encoder that simultaneously performs binary classification (accept/reject) and regression (hallucination severity scoring).
-- **Parameter-Efficient Specialization**: Utilizes QLoRA to adapt Mistral-7B specifically for systematic critique generation without full-weight tuning computation costs.
-- **Dynamic Evidence Retrieval**: Supports a CLI-based browsing agent for late-stage factual grounding when intrinsic model knowledge fails.
-- **Empirical Benchmarking Suite**: Automates the measurement of factual correctness, stagnation rates, and computational latency across different architectural configurations.
+
+### 1. Critic–Refiner Loop
+- Iterative self-correction mechanism
+- Tracks score, delta, and convergence behavior
+- Supports strict mode when hallucinations persist
+
+### 2. Learned Critic (MiniLM)
+- Multi-task model:
+  - Quality score prediction (regression)
+  - Verdict classification
+- Reduces reliance on expensive LLM critiques
+- Falls back to LLM critic for detailed feedback
+
+### 3. QLoRA Fine-Tuned Critic
+- Fine-tuned Mistral-7B using LoRA adapters
+- Efficient training with low memory footprint
+- Synthetic dataset generated via corruption strategies
+
+### 4. Browser-Augmented Grounding (Optional)
+- CLI-based browsing (DuckDuckGo + w3m)
+- Triggered only when:
+  - hallucinations detected
+  - factual errors present
+- Injects retrieved evidence into refinement loop
+
+---
 
 ## Training Pipeline
 
 ### Dataset Generation
-A synthetic dataset was engineered to train the specialized critic models. High-quality answers were programmatically corrupted to introduce factual errors, logical contradictions, and omitted information. The dataset pairs the original user prompts with these corrupted responses and the corresponding "ideal" structured critiques generated by an oracle model.
+- Synthetic corruption of correct answers:
+  - factual distortions
+  - logical inconsistencies
+  - missing concepts
+- Enables supervised learning of critique behavior
 
 ### MiniLM Critic Training
-A lightweight BERT-based model (MiniLM) was trained on the generated dataset via supervised learning. The architecture formulates output evaluation as a multi-task problem. It provides high-speed, pre-emptive evaluations, reserving the heavier LLM critic for instances requiring deep structural feedback.
+- Input: (query, answer)
+- Outputs:
+  - quality score
+  - verdict label
+- Loss:
+  - regression + classification
 
 ### QLoRA Fine-Tuning
-The Mistral-7B model was fine-tuned using Parameter-Efficient Fine-Tuning (PEFT) with Quantized Low-Rank Adaptation (QLoRA). By isolating the critique generation task, the model develops strong zero-shot anomaly detection capabilities within a reduced memory footprint.
+- Base model: Mistral-7B
+- LoRA adapters for efficient updates
+- Fine-tuned as a critic model
 
-## Browser-Augmented Grounding
-To address knowledge cutoffs and deep factual hallucinations, the system implements an optional Browser-Augmented Grounding module. 
+---
 
-- **Mechanism**: The module utilizes a CLI-based browsing agent (DuckDuckGo + w3m). It is triggered exclusively when the primary critic detects severe factual errors or low confidence in intrinsic knowledge. The retrieved text is then injected into the Refiner's context window.
-- **Limitations of Retrieval-Dependent Systems**: Empirical testing reveals a critical limitation common to retrieval-augmented agents: system effectiveness remains heavily dependent on retrieval quality. During evaluation, the browser agent periodically failed to return relevant pages or returned zero results. Consequently, browser grounding does not universally improve outcomes. If the retrieval step fails, the refinement loop can stall or regress, highlighting the necessity of robust fallback mechanisms.
+## Browser-Augmented System
 
-## Benchmark Results
-The evaluation framework empirically compares four disparate system configurations across a standardized test set.
+The system includes an optional tool-use module for grounding.
 
-- **System A: Baseline**: Single-pass generation with no refinement.
-- **System B: LLM Critic**: Zero-shot prompting of a baseline LLM for critique generation.
-- **System C: Learned Critic**: Utilization of the fine-tuned/MiniLM ensemble for rapid, specialized feedback.
-- **System D: Browser-Augmented**: Learned Critic loop augmented with external search for factual failures.
+### Behavior
+- Activated when critic detects errors
+- Performs:
+  - search → fetch → inject evidence
+- Evidence used in subsequent refinement
 
-*Metrics measured include Factual Accuracy (%), Hallucination Penalties, Average Loop Iterations, and System Latency. The Learned Critic generally optimizes the accuracy-to-latency ratio, whereas System D provides mixed results heavily skewed by search query success rates.*
+### Observed Limitation
 
-## Insights and Learnings
-1. **Naive LLM Self-Correction is Unstable**: Relying on an unstructured, unspecialized LLM to evaluate its own output frequently results in confirmation bias, cyclic edits without improvement, or degradation of the original text.
-2. **Specialization Yields Efficiency**: Training dedicated critics (both small encoders like MiniLM and QLoRA-adapted LLMs) significantly improves the stability of the refinement loop. Specialized critics issue deterministic, targeted feedback that the Refiner can act upon effectively.
-3. **The Retrieval Quality Bottleneck**: While external tool use (browsing) theoretically solves the hallucination problem, it introduces a hard dependency on search mechanics. When search fails, the tool-augmented system performs no better—and sometimes worse due to context pollution—than the closed-weight Learned Critic system.
+Retrieval success is inconsistent:
 
-## Installation & Usage
+- In multiple runs, browser triggered correctly  
+- However, **0 pages were retrieved in some cases**
 
-Ensure you have Python 3.10+ and a CUDA-capable GPU.
+Example:
+```text
+Browser grounding triggered
+pages_retrieved = 0
+```
+
+This highlights a key limitation:
+
+> The effectiveness of tool-augmented LLMs is highly dependent on retrieval reliability.
+
+---
+
+## Benchmark Setup
+
+We evaluate four systems:
+
+| System | Description |
+|------|------------|
+| A | Baseline (no refinement) |
+| B | LLM Critic |
+| C | Learned Critic |
+| D | Browser-Augmented |
+
+Metrics:
+- Factual accuracy
+- Hallucination count
+- Iterations to convergence
+- Latency
+
+---
+
+## Benchmark Summary
+
+| System | Behavior | Strength | Limitation |
+|--------|--------|----------|-----------|
+| Baseline | Single-pass generation | Fast | No correction |
+| LLM Critic | Iterative refinement | Reduces errors | Can stagnate |
+| Learned Critic | Faster evaluation | Efficient | Misalignment with true quality |
+| Browser-Augmented | Grounded refinement | Improves factuality (when retrieval works) | Retrieval-dependent |
+
+### Key Observation
+
+- Self-correction improves quality, but is **not guaranteed to converge**
+- Tool augmentation improves results **only when retrieval succeeds**
+- Learned critics introduce speed but reduce reliability
+
+---
+
+## Empirical Observations
+
+### 1. Iterative Refinement is Non-Monotonic
+
+Performance does not always improve across iterations.
+
+Example:
+- score: 0.70 → 0.00  
+- delta: negative  
+- loop exit: exhausted
+
+Indicates:
+- refinement can degrade outputs
+- critic feedback is not always constructive
+
+---
+
+### 2. Hallucination Persistence
+
+Even after multiple iterations:
+
+- hallucinations remain
+- strict mode activates
+- convergence often fails
+
+---
+
+### 3. Learned Critic Limitations
+
+- Predicts reasonable scores (~6.5)
+- But actual evaluation may drop to 0
+
+This shows:
+> Learned evaluation does not fully align with true correctness.
+
+---
+
+### 4. Tool-Augmented Gains (Conditional)
+
+When retrieval succeeds:
+- hallucinations decrease
+- scores improve (e.g., 0 → 2.8)
+
+When retrieval fails:
+- no improvement
+- system behaves like standard loop
+
+---
+
+### 5. Stagnation and Early Exit
+
+System detects lack of progress:
+
+- low deltas across iterations
+- exits with `STAGNATED`
+
+Indicates:
+- need for stronger refinement strategies
+
+---
+
+## Failure Analysis
+
+This system exhibits several important failure modes:
+
+### 1. Non-Monotonic Refinement
+- Iterative updates can degrade answer quality
+- Example:
+  - score: 0.70 → 0.00
+  - loop exit: exhausted
+
+### 2. Hallucination Persistence
+- Some hallucinations persist across multiple iterations
+- Even under strict refinement mode
+
+### 3. Retrieval Failure
+- Browser module may return zero results
+- Leads to no improvement in grounded refinement
+
+### 4. Critic–Reality Misalignment
+- Learned critic predicts "good"
+- LLM critic assigns score ≈ 0
+
+### 5. Stagnation
+- System halts when improvements fall below threshold
+- Indicates limitations in refinement strategy
+
+These failure modes highlight that:
+
+> Self-improving LLM systems require not just feedback, but reliable evaluation and grounding mechanisms.
+
+---
+
+## Why This Matters
+
+Modern LLM systems increasingly rely on:
+
+- Self-reflection
+- Tool usage
+- Iterative reasoning
+
+This project explores all three in a unified framework.
+
+Key implications:
+
+- Self-correction alone is insufficient for reliability
+- Learned evaluation introduces efficiency–accuracy tradeoffs
+- Tool augmentation is powerful but brittle
+- Reliable AI systems require coordination between reasoning, evaluation, and grounding
+
+This work serves as a prototype for:
+
+- Agentic AI systems
+- Autonomous reasoning loops
+- Reliable LLM deployment pipelines
+
+---
+
+## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/self-correcting-llm.git
+git clone https://github.com/your-repo/self-correcting-llm
 cd self-correcting-llm
 
-# Initialize virtual environment
-python -m venv venv
-source venv/bin/activate
-
-# Install requirements
 pip install -r requirements.txt
 ```
 
-### Execution Commands
+## Usage
 
+Run benchmark:
 ```bash
-# Run the Baseline system (System A)
-python scripts/run_pipeline.py --mode baseline --prompt "<your_prompt>"
+python main.py --mode benchmark
+```
 
-# Run the LLM Critic loop (System B)
-python scripts/run_pipeline.py --mode llm_critic --prompt "<your_prompt>"
-
-# Run the Learned Critic loop (System C)
-python scripts/run_pipeline.py --mode learned_critic --prompt "<your_prompt>"
-
-# Run the Browser-Augmented loop (System D)
-python scripts/run_pipeline.py --mode learned_critic --use-browser --prompt "<your_prompt>"
-
-# Execute the benchmarking suite
-python evaluation/run_benchmarks.py --config config.py
+Run single query:
+```bash
+python main.py --query "What is RLHF?"
 ```
 
 ## Project Structure
-
 ```text
-.
-├── core/                # System orchestration, loop control, and prompt engineering
-├── data/                # Data generation scripts and synthesized corruption datasets
-├── evaluation/          # Benchmarking frameworks and scoring heuristics
-├── models/              # Interfaces for Ollama, HF Transformers, and PEFT logic
-├── scripts/             # Entry files for training, fine-tuning, and inference
-├── tests/               # Unit and integration tests
-├── tools/               # External tool implementations (Browser CLI agent)
-├── trained_models/      # Stored adapter weights (QLoRA) and MiniLM states
-├── utils/               # Logging, formatting, and helper configurations
-├── app.py               # Front-end or API entry point
-├── config.py            # Global system hyperparameter definitions
-└── requirements.txt     # Python dependencies
-```
+core/
+  generator.py
+  critic.py
+  learned_critic.py
+  refiner.py
+  loop.py
 
-## Future Work
-- **Reinforcement Learning from Human Feedback (RLHF)**: Incorporate direct preference optimization into the critic fine-tuning pipeline.
-- **Retrieval Robustness**: Replace the CLI web-scraper with a resilient vector database (RAG) integration to bypass search engine query volatility.
-- **Asymmetric Architectures**: Explore using significantly smaller refiner models heavily conditioned on high-quality critique vectors to reduce computational overhead. 
+tools/
+  browser.py
+
+training/
+  dataset.py
+  train_critic.py
+
+main.py
+```
