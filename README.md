@@ -16,31 +16,6 @@ We benchmark multiple configurations to evaluate how self-reflection, learned ev
 
 ---
 
-## Design Philosophy
-
-This system is built around three principles:
-
-### 1. Separation of Roles
-- Generator → produces answers
-- Critic → evaluates
-- Refiner → improves
-
-### 2. Conditional Complexity
-- Advanced modules (browser, learned critic) activate only when needed
-
-### 3. Measurable Behavior
-- Every iteration tracks:
-  - score
-  - delta
-  - convergence state
-
-This enables:
-- debugging
-- benchmarking
-- research analysis
-
----
-
 ## System Overview
 
 The core pipeline follows an iterative refinement loop:
@@ -243,20 +218,20 @@ When retrieval succeeds:
 - scores improve (e.g., 0 → 2.8)
 
 When retrieval fails:
-- no improvement
-- system behaves like standard loop
+- Browser module triggers correctly
+- However, retrieval may fail (0 pages returned)
+- no improvement, system behaves like standard loop
+
+Implication:
+
+> Effectiveness of tool-augmented systems depends heavily on retrieval reliability
 
 ---
 
-### 5. Stagnation and Early Exit
+### 5. Stagnation Behavior
 
-System detects lack of progress:
-
-- low deltas across iterations
-- exits with `STAGNATED`
-
-Indicates:
-- need for stronger refinement strategies
+- System detects low improvement (delta ≈ 0)
+- Exits early to avoid wasted iterations
 
 ---
 
@@ -317,25 +292,64 @@ This work serves as a prototype for:
 
 ---
 
+## Limitations
+
+- Synthetic dataset does not fully represent real LLM failure modes
+- Learned critic shows weak alignment with ground truth evaluation
+- Browser retrieval is inconsistent
+- No human preference data (unlike RLHF-style training)
+- Quantitative improvements are limited and context-dependent
+
+---
+
+## Related Work
+
+This project builds on existing paradigms:
+
+- Self-Refine (Madaan et al., 2023)
+- Reflexion (Shinn et al., 2023)
+
+The focus here is on:
+- system integration
+- evaluation behavior
+- practical experimentation
+
+---
+
+## Design Philosophy
+
+- **Modularity**: generator, critic, and refiner are decoupled
+- **Conditional complexity**: expensive components (LLM critic, browser) activate only when needed
+- **Measurability**: each iteration tracks score and convergence signals
+
+---
+
 ## Installation
 
 ```bash
-git clone https://github.com/your-repo/self-correcting-llm
+git clone <repo-url>
 cd self-correcting-llm
-
 pip install -r requirements.txt
 ```
 
 ## Usage
 
 Run benchmark:
+
 ```bash
-python main.py --mode benchmark
+python evaluation/run_benchmark.py
 ```
 
-Run single query:
+With browser:
+
 ```bash
-python main.py --query "What is RLHF?"
+python evaluation/run_benchmark.py --use-browser
+```
+
+Run pipeline:
+
+```bash
+python app.py
 ```
 
 ## Project Structure
@@ -350,9 +364,11 @@ core/
 tools/
   browser.py
 
-training/
-  dataset.py
+scripts/
+  generate_dataset.py
   train_critic.py
+  finetune_critic_qlora.py
 
-main.py
+evaluation/
+  run_benchmark.py
 ```
