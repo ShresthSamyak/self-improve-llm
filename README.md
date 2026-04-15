@@ -1,136 +1,117 @@
-# Self-Correcting LLM (Critic–Refiner Loop)
+# Self-Correcting LLM with Critic–Refiner Loop and Optional Tool-Augmented Grounding
 
-## 1. Project Overview
-This project implements a multi-agent Large Language Model (LLM) system designed to iteratively improve text generation quality through a structured self-correction mechanism. The architecture consists of a Generator LLM that produces an initial draft, a specialized Critic model that evaluates the draft for factual errors and hallucinations, and a Refiner LLM that incorporates the critique to generate an improved response. The system runs iteratively under strict loop control constraints, including stagnation detection and early stopping mechanisms.
+## Abstract
+This project explores multi-agent self-reflection and refinement in Large Language Models (LLMs). The system addresses the limitations of naive self-correction by decoupling the generation, evaluation, and refinement phases into distinct models. By introducing specialized learned critics (via supervised learning and QLoRA fine-tuning) and optional tool-augmented grounding (browser retrieval), the architecture mitigates hallucination and improves factual consistency. The framework includes a comprehensive empirical benchmark to measure the efficacy and efficiency of different self-correction paradigms.
 
-## 2. Motivation
-State-of-the-art LLMs frequently suffer from hallucinations, logical inconsistencies, and factual inaccuracies. Naive self-correction (asking the same model to fix its own mistakes) is often unstable and can lead to degradation in output quality. This project addresses the hallucination problem by introducing an independent, specialized critique mechanism. By utilizing distinct models for generation and verification—specifically, fine-tuned or learned critics—the system achieves more reliable self-correction and higher factual accuracy.
+## System Architecture
+The system operates as an iterative feedback loop, consisting of three primary components:
 
-## 3. System Architecture
+1. **Generator**: Produces an initial unconstrained response to the user query.
+2. **Critic**: Evaluates the output against logical consistency, factual accuracy, and completeness. The system can route this evaluation through a fast learned encoder, a fine-tuned LLM, or a fallback baseline LLM.
+3. **Refiner**: Integrates the structured critique with the original context to generate a corrected output.
 
-```text
-      +-----------------+
-      |  User Prompt    |
-      +--------+--------+
-               |
-               v
-      +--------+--------+
-      |  Generator LLM  | <-------------------+
-      +--------+--------+                     |
-               |                              |
-               v                              | Feedback Loop
-      +--------+--------+                     |
-      |   Critic Model  | ---------+          |
-      +--------+--------+          |          |
-               |                   |          |
-               v (Accepted)        v (Rejected/Critique)
-      +--------+--------+      +---+----------------+
-      |  Final Output   |      |   Refiner LLM      |
-      +-----------------+      +--------------------+
-```
+The loop terminates when the Critic accepts the output or when the loop controller detects stagnation/reaches a maximum iteration threshold.
 
-## 4. Pipeline Explanation
-The refinement pipeline executes the following step-by-step process:
-1. **Initial Generation**: The User Prompt is passed to the Generator LLM to produce a baseline answer.
-2. **Critique Generation**: The initial answer is provided to the Critic model. The critic analyzes the text against factual consistency, logical flow, and potential hallucinations.
-3. **Evaluation & Control**: If the critic determines the response is of high quality (accepted), the loop terminates. If flaws are found, a structured critique is generated.
-4. **Refinement**: The Refiner LLM takes the initial prompt, the current draft, and the structured critique, generating a revised response.
-5. **Iteration & Early Stopping**: The loop repeats until the critic accepts the response or a predefined maximum iteration limit is reached. The loop control module tracks stagnation to prevent infinite loops or model degradation.
+### Control Flow
+- **User Query** → **Generator LLM** (Initial Draft)
+- **Draft** → **Critic Model** (Evaluation & Scoring)
+- If Accepted → **Final Output**
+- If Rejected → **Critique + Draft** → **Refiner LLM** (Revised Draft) → Loop back to Critic
 
-## 5. Models Used
-- **Generator**: Mistral-7B (instruct-tuned) for strong baseline text generation.
-- **Refiner**: Mistral-7B (instruct-tuned) for processing critiques and updating drafts.
-- **LLM Critic**: Baseline LLM used via zero-shot/few-shot prompting (slow but highly expressive).
-- **Learned Critic**: MiniLM-based encoder architecture to rapidly predict logical and factual errors.
-- **Fine-Tuned LLM Critic**: Mistral-7B fine-tuned using QLoRA to generate structured, systematic critiques.
-- **Local Inference**: Ollama engine utilized for local, efficient LLM execution.
+## Key Features
+- **Decoupled Self-Reflection**: Prevents the confirmation bias inherent in prompting a single LLM to grade its own output.
+- **Multi-Task Active Critic**: Employs a learned MiniLM encoder that simultaneously performs binary classification (accept/reject) and regression (hallucination severity scoring).
+- **Parameter-Efficient Specialization**: Utilizes QLoRA to adapt Mistral-7B specifically for systematic critique generation without full-weight tuning computation costs.
+- **Dynamic Evidence Retrieval**: Supports a CLI-based browsing agent for late-stage factual grounding when intrinsic model knowledge fails.
+- **Empirical Benchmarking Suite**: Automates the measurement of factual correctness, stagnation rates, and computational latency across different architectural configurations.
 
-## 6. Training Details
+## Training Pipeline
 
 ### Dataset Generation
-A synthetic dataset was generated by taking high-quality LLM outputs and algorithmically introducing factual errors, contradictions, and missing concepts. The resulting dataset pairs original prompts, corrupted responses, and the expected structured critiques.
+A synthetic dataset was engineered to train the specialized critic models. High-quality answers were programmatically corrupted to introduce factual errors, logical contradictions, and omitted information. The dataset pairs the original user prompts with these corrupted responses and the corresponding "ideal" structured critiques generated by an oracle model.
 
-### MiniLM Training
-A lightweight BERT-based model (MiniLM) was trained on the synthetic dataset via supervised learning. The model operates as a multi-task network performing both classification (accept/reject) and regression (scoring hallucination severity) to provide fast, pre-emptive evaluations.
+### MiniLM Critic Training
+A lightweight BERT-based model (MiniLM) was trained on the generated dataset via supervised learning. The architecture formulates output evaluation as a multi-task problem. It provides high-speed, pre-emptive evaluations, reserving the heavier LLM critic for instances requiring deep structural feedback.
 
 ### QLoRA Fine-Tuning
-The Mistral-7B model was fine-tuned using Parameter-Efficient Fine-Tuning (PEFT) and Quantized Low-Rank Adaptation (QLoRA). This specialization trains the model exclusively on the critique generation task, vastly improving its ability to identify nuanced hallucinations without the memory footprint of full fine-tuning.
+The Mistral-7B model was fine-tuned using Parameter-Efficient Fine-Tuning (PEFT) with Quantized Low-Rank Adaptation (QLoRA). By isolating the critique generation task, the model develops strong zero-shot anomaly detection capabilities within a reduced memory footprint.
 
-## 7. Benchmark Results
-A comprehensive benchmarking framework measures factual accuracy, hallucination rates, and computational efficiency across three configurations.
+## Browser-Augmented Grounding
+To address knowledge cutoffs and deep factual hallucinations, the system implements an optional Browser-Augmented Grounding module. 
 
-| Configuration | Factual Accuracy | Hallucination Rate | Avg. Iterations | Latency (s) |
-| ------------- | :---: | :---: | :---: | :---: |
-| Baseline (No Refinement) | X% | X% | 0 | X |
-| LLM Critic Loop | X% | X% | X | X |
-| Learned Critic Loop | X% | X% | X | X |
+- **Mechanism**: The module utilizes a CLI-based browsing agent (DuckDuckGo + w3m). It is triggered exclusively when the primary critic detects severe factual errors or low confidence in intrinsic knowledge. The retrieved text is then injected into the Refiner's context window.
+- **Limitations of Retrieval-Dependent Systems**: Empirical testing reveals a critical limitation common to retrieval-augmented agents: system effectiveness remains heavily dependent on retrieval quality. During evaluation, the browser agent periodically failed to return relevant pages or returned zero results. Consequently, browser grounding does not universally improve outcomes. If the retrieval step fails, the refinement loop can stall or regress, highlighting the necessity of robust fallback mechanisms.
 
-## 8. Key Insights / Learnings
-**Important Insight**: The project demonstrates that naive LLM self-refinement can be unstable and may degrade output quality, while learned critics provide more stable and efficient improvements. Relying on an unstructured LLM to grade itself often leads to confirmation bias or "apologetic loops." Decoupling the critic and explicitly fine-tuning it (either as a lightweight encoder or via QLoRA) isolates the verification task, yielding measurably superior deterministic corrections.
+## Benchmark Results
+The evaluation framework empirically compares four disparate system configurations across a standardized test set.
 
-## 9. Installation Instructions
+- **System A: Baseline**: Single-pass generation with no refinement.
+- **System B: LLM Critic**: Zero-shot prompting of a baseline LLM for critique generation.
+- **System C: Learned Critic**: Utilization of the fine-tuned/MiniLM ensemble for rapid, specialized feedback.
+- **System D: Browser-Augmented**: Learned Critic loop augmented with external search for factual failures.
 
-Ensure you have Python 3.10+ and an NVIDIA GPU with CUDA support available.
+*Metrics measured include Factual Accuracy (%), Hallucination Penalties, Average Loop Iterations, and System Latency. The Learned Critic generally optimizes the accuracy-to-latency ratio, whereas System D provides mixed results heavily skewed by search query success rates.*
+
+## Insights and Learnings
+1. **Naive LLM Self-Correction is Unstable**: Relying on an unstructured, unspecialized LLM to evaluate its own output frequently results in confirmation bias, cyclic edits without improvement, or degradation of the original text.
+2. **Specialization Yields Efficiency**: Training dedicated critics (both small encoders like MiniLM and QLoRA-adapted LLMs) significantly improves the stability of the refinement loop. Specialized critics issue deterministic, targeted feedback that the Refiner can act upon effectively.
+3. **The Retrieval Quality Bottleneck**: While external tool use (browsing) theoretically solves the hallucination problem, it introduces a hard dependency on search mechanics. When search fails, the tool-augmented system performs no better—and sometimes worse due to context pollution—than the closed-weight Learned Critic system.
+
+## Installation & Usage
+
+Ensure you have Python 3.10+ and a CUDA-capable GPU.
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/self-correcting-llm.git
 cd self-correcting-llm
 
-# Create a virtual environment
+# Initialize virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 
-# Install dependencies
+# Install requirements
 pip install -r requirements.txt
-
-# Install Ollama (requires external setup, see ollama.ai)
-# Pull the required local models
-ollama pull mistral
 ```
 
-## 10. Usage Instructions
+### Execution Commands
 
-**Run the Baseline Pipeline**
 ```bash
-python scripts/run_pipeline.py --mode baseline --prompt "Explain the mechanics of a quantum computer."
-```
+# Run the Baseline system (System A)
+python scripts/run_pipeline.py --mode baseline --prompt "<your_prompt>"
 
-**Run the LLM Critic Loop**
-```bash
-python scripts/run_pipeline.py --mode llm_critic
-```
+# Run the LLM Critic loop (System B)
+python scripts/run_pipeline.py --mode llm_critic --prompt "<your_prompt>"
 
-**Run the Learned Critic Loop (Hybrid)**
-```bash
-python scripts/run_pipeline.py --mode hybrid_critic
-```
+# Run the Learned Critic loop (System C)
+python scripts/run_pipeline.py --mode learned_critic --prompt "<your_prompt>"
 
-**Run Benchmark Evaluations**
-```bash
+# Run the Browser-Augmented loop (System D)
+python scripts/run_pipeline.py --mode learned_critic --use-browser --prompt "<your_prompt>"
+
+# Execute the benchmarking suite
 python evaluation/run_benchmarks.py --config config.py
 ```
 
-## 11. Project Structure
+## Project Structure
+
 ```text
 .
-├── core/                # Core logic for Generator, Critic, Refiner modules
-├── data/                # Datasets (synthetic generation, training data)
-├── evaluation/          # Benchmarking scripts and metric calculations
-├── models/              # Model abstraction wrappers and definitions
-├── scripts/             # Execution and pipeline training scripts
-├── tests/               # Unit testing framework
-├── trained_models/      # Target directory for QLoRA weights and MiniLM states
-├── utils/               # Helpers for API interfaces and logging
-├── app.py               # Main application entry point
-├── config.py            # Global hyperparameter and system configuration
-└── requirements.txt     # Dependency specifications
+├── core/                # System orchestration, loop control, and prompt engineering
+├── data/                # Data generation scripts and synthesized corruption datasets
+├── evaluation/          # Benchmarking frameworks and scoring heuristics
+├── models/              # Interfaces for Ollama, HF Transformers, and PEFT logic
+├── scripts/             # Entry files for training, fine-tuning, and inference
+├── tests/               # Unit and integration tests
+├── tools/               # External tool implementations (Browser CLI agent)
+├── trained_models/      # Stored adapter weights (QLoRA) and MiniLM states
+├── utils/               # Logging, formatting, and helper configurations
+├── app.py               # Front-end or API entry point
+├── config.py            # Global system hyperparameter definitions
+└── requirements.txt     # Python dependencies
 ```
 
-## 12. Future Improvements
-- **Reinforcement Learning from Human Feedback (RLHF)**: Integrate implicit human preference signals into the QLoRA training phase.
-- **Vector Search Augmentation**: Integrate Retrieval-Augmented Generation (RAG) directly into the critic's feedback mechanism to ground verification against a persistent knowledge base.
-- **Dynamic Critic Selection**: Implement a routing layer that algorithmically decides whether to use the fast MiniLM critic or the heavily expressive LLM critic depending on the prompt's complexity.
-
-## 13. License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+## Future Work
+- **Reinforcement Learning from Human Feedback (RLHF)**: Incorporate direct preference optimization into the critic fine-tuning pipeline.
+- **Retrieval Robustness**: Replace the CLI web-scraper with a resilient vector database (RAG) integration to bypass search engine query volatility.
+- **Asymmetric Architectures**: Explore using significantly smaller refiner models heavily conditioned on high-quality critique vectors to reduce computational overhead. 
