@@ -410,6 +410,9 @@ def apply_lora(
         target_modules=["q_proj", "v_proj"],
         bias="none",
         inference_mode=False,
+        # Disable float8 autocast — requires torch >= 2.1 with float8 support.
+        # Without this, PEFT tries torch.float8_e8m0fnu which older builds lack.
+        autocast_adapter_dtype=False,
     )
     model = get_peft_model(model, lora_config)
     model.print_trainable_parameters()
