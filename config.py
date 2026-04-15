@@ -19,7 +19,7 @@ class LLMConfig:
     override ``model_name`` by passing a different value to their LLM
     constructor — see ``OllamaLLM(config, model=...)``.
     """
-    model_name: str = "mistral"
+    model_name: str = "mistral:7b"
     max_tokens: int = 512
     temperature: float = 0.7
     top_p: float = 0.9
@@ -76,7 +76,12 @@ class PipelineConfig:
     llm: LLMConfig = field(default_factory=LLMConfig)
     loop: LoopConfig = field(default_factory=LoopConfig)
     # Per-component model selection — each can be any model available in Ollama.
-    generator_model: str = "mistral"
-    critic_model: str = "llama3"
-    refiner_model: str = "mistral"
+    generator_model: str = "mistral:7b"
+    critic_model: str = "llama3.1:8b"
+    refiner_model: str = "mistral:7b"
     verbose: bool = True
+
+
+def get_default_config() -> PipelineConfig:
+    """Return a PipelineConfig populated with sensible defaults."""
+    return PipelineConfig()

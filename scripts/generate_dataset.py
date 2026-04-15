@@ -34,14 +34,20 @@ def main():
     parser.add_argument("--queries_file", type=str, default=None, help="Path to text file containing queries (one per line).")
     parser.add_argument("--output_file", type=str, default="data/critic_train.json")
     parser.add_argument("--num_corruptions", type=int, default=1, help="Number of corrupted versions per query.")
+    parser.add_argument("--model", type=str, default=None, help="Ollama model to use (overrides config default).")
     args = parser.parse_args()
 
     config = get_default_config()
+    if args.model:
+        config.llm.model_name = args.model
+        config.generator_model = args.model
+        config.critic_model = args.model
+        config.refiner_model = args.model
     # We use the existing local LLM to do the heavy lifting
-    llm = OllamaLLM(config)
-    
-    generator = Generator(llm, config)
-    critic = Critic(llm, config)
+    llm = OllamaLLM(config.llm)
+
+    generator = Generator(llm, config.llm)
+    critic = Critic(llm, config.llm)
 
     # 1. Load Queries
     if args.queries_file and Path(args.queries_file).exists():
