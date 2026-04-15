@@ -157,10 +157,18 @@ def run(query: str, config: PipelineConfig, use_mock: bool = False) -> None:
         print(separator)
         for record in result.iterations:
             fb = record.feedback
+            delta_str = (
+                f"{record.improvement_delta:+.2f}"
+                if record.iteration > 1 else "n/a (first)"
+            )
+            strict_str = " [STRICT MODE]" if record.strict_mode_used else ""
             print(
                 f"\n[Iteration {record.iteration}]  "
-                f"score={fb.score}/10 (raw={fb.raw_llm_score})  "
-                f"verdict={fb.verdict}  confidence={fb.confidence:.2f}"
+                f"score={fb.score:.2f}/10 (raw={fb.raw_llm_score:.2f})  "
+                f"delta={delta_str}  verdict={fb.verdict}  "
+                f"issues={record.issue_count}  "
+                f"hallucinations={record.hallucination_count}"
+                f"{strict_str}"
             )
             if fb.hallucinations:
                 print("  Hallucinations [!]:")
@@ -184,7 +192,10 @@ def run(query: str, config: PipelineConfig, use_mock: bool = False) -> None:
                     print(f"    >> {a}")
 
     print(f"\n{separator}")
-    print(f"FINAL ANSWER  (converged={result.converged})")
+    print(
+        f"FINAL ANSWER  "
+        f"[exit={result.exit_reason.upper()}  converged={result.converged}]"
+    )
     print(separator)
     print(result.final_answer)
 
@@ -198,8 +209,9 @@ def run(query: str, config: PipelineConfig, use_mock: bool = False) -> None:
         f"  Final composite score   : {metrics.final_metrics.composite_score:.2f} / 10"
     )
     print(f"  Score delta             : {metrics.score_delta:+.2f}")
-    print(f"  Iteration scores        : {metrics.iteration_scores}")
-    print(f"  Converged               : {metrics.converged}")
+    print(f"  Score history (critic)  : {result.score_history}")
+    print(f"  Exit reason             : {result.exit_reason}")
+    print(f"  Converged               : {result.converged}")
     print(separator)
 
 
@@ -256,6 +268,18 @@ def main() -> None:
         help="Minimum critic score to accept an answer (0-10).",
     )
     parser.add_argument(
+        "--stagnation-patience",
+        type=int,
+        default=2,
+        help="Consecutive low-improvement iterations before early stop.",
+    )
+    parser.add_argument(
+        "--min-improvement-delta",
+        type=float,
+        default=0.3,
+        help="Minimum score gain per iteration to count as progress.",
+    )
+    parser.add_argument(
         "--mock",
         action="store_true",
         help="Use MockLLM instead of Ollama (no server required).",
@@ -270,6 +294,8 @@ def main() -> None:
         loop=LoopConfig(
             max_iterations=args.max_iterations,
             min_quality_score=args.min_score,
+            stagnation_patience=args.stagnation_patience,
+            min_improvement_delta=args.min_improvement_delta,
         ),
         generator_model=args.generator_model,
         critic_model=args.critic_model,

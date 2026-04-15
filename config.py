@@ -31,12 +31,36 @@ class LLMConfig:
 
 @dataclass
 class LoopConfig:
-    """Controls the critic-refiner iteration loop."""
+    """
+    Controls the adaptive critic-refiner iteration loop.
+
+    Quality gate
+    ------------
+    The loop exits with ``exit_reason="converged"`` only when ALL of:
+      - zero hallucinations
+      - zero factual errors
+      - score >= min_quality_score
+      - verdict is "good" or "excellent"
+
+    Stagnation detection
+    --------------------
+    If the score improvement over the last ``stagnation_patience``
+    consecutive iterations is all below ``min_improvement_delta``,
+    the loop exits early with ``exit_reason="stagnated"`` rather than
+    wasting iterations on a plateaued answer.
+
+    Adaptive strict mode
+    --------------------
+    When hallucinations persist across two consecutive iterations, the
+    Refiner is automatically escalated to strict mode for the next pass.
+    """
     max_iterations: int = 3
-    # Stop early when critic confidence exceeds this threshold (0-1 scale).
-    confidence_threshold: float = 0.85
     # Minimum score the critic must assign before the loop exits.
-    min_quality_score: float = 7.0   # out of 10
+    min_quality_score: float = 7.0           # out of 10
+    # Stagnation: how many consecutive low-delta iterations trigger early stop.
+    stagnation_patience: int = 2
+    # Minimum score improvement to count as meaningful progress.
+    min_improvement_delta: float = 0.3
 
 
 @dataclass
