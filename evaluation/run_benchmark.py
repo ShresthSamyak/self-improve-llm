@@ -822,15 +822,15 @@ def main() -> None:
              "Defaults to built-in held-out set.",
     )
     parser.add_argument(
-        "--generator-model", type=str, default="mistral",
+        "--generator-model", type=str, default="mistral:7b",
         help="Ollama model for the Generator."
     )
     parser.add_argument(
-        "--critic-model", type=str, default="llama3",
+        "--critic-model", type=str, default="llama3.1:8b",
         help="Ollama model for the LLM Critic and judge."
     )
     parser.add_argument(
-        "--refiner-model", type=str, default="mistral",
+        "--refiner-model", type=str, default="mistral:7b",
         help="Ollama model for the Refiner."
     )
     parser.add_argument(
